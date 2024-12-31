@@ -1,0 +1,12 @@
+{
+  "name": "gestao-rifas",
+  "version": "1.0.0",
+  "description": "Sistema de gerenciamento de rifas eletrônicas com funcionalidades completas para criar, gerenciar e realizar sorteios online.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
