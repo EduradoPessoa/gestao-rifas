@@ -1,62 +1,154 @@
 <template>
-  <div class="home">
-    <header class="hero">
-      <div class="hero__content">
-        <h1>Rifas Online</h1>
-        <p>Participe de sorteios exclusivos com total transparência e segurança</p>
-        <router-link to="/rifas" class="btn btn--primary">Ver Rifas Disponíveis</router-link>
+  <div class="dashboard">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo-container">
+        <img src="@/assets/logo.svg" alt="Rifas Online" class="logo" />
+        <span class="logo-text">Rifas Online</span>
       </div>
-    </header>
-
-    <section class="featured-raffles">
-      <h2>Rifas em Destaque</h2>
-      <div class="raffle-grid">
-        <RaffleCard
-          v-for="raffle in featuredRaffles"
-          :key="raffle.id"
-          :raffle="raffle"
-          @select-quote="navigateToRaffle(raffle.id)"
-        />
-      </div>
-    </section>
-
-    <section class="how-it-works">
-      <h2>Como Funciona</h2>
-      <div class="steps-grid">
-        <div class="step">
-          <i class="fas fa-search"></i>
-          <h3>1. Escolha uma Rifa</h3>
-          <p>Navegue entre as rifas disponíveis e escolha a que mais te interessar</p>
-        </div>
-        <div class="step">
+      
+      <nav class="nav-menu">
+        <router-link to="/" class="nav-item active">
+          <i class="fas fa-home"></i>
+          <span>Início</span>
+        </router-link>
+        <router-link to="/rifas" class="nav-item">
           <i class="fas fa-ticket-alt"></i>
-          <h3>2. Selecione seus Números</h3>
-          <p>Escolha quantos números desejar para aumentar suas chances</p>
-        </div>
-        <div class="step">
-          <i class="fas fa-credit-card"></i>
-          <h3>3. Faça o Pagamento</h3>
-          <p>Pague de forma segura com cartão de crédito ou PIX</p>
-        </div>
-        <div class="step">
+          <span>Minhas Rifas</span>
+        </router-link>
+        <router-link to="/vendas" class="nav-item">
+          <i class="fas fa-shopping-cart"></i>
+          <span>Vendas</span>
+        </router-link>
+        <router-link to="/sorteios" class="nav-item">
           <i class="fas fa-trophy"></i>
-          <h3>4. Aguarde o Sorteio</h3>
-          <p>Acompanhe o sorteio ao vivo e boa sorte!</p>
+          <span>Sorteios</span>
+        </router-link>
+        
+        <!-- Menu Admin -->
+        <template v-if="authStore.isAdmin">
+          <div class="menu-divider"></div>
+          <router-link to="/admin/rifas" class="nav-item">
+            <i class="fas fa-cog"></i>
+            <span>Gerenciar Rifas</span>
+          </router-link>
+          <router-link to="/admin/produtos" class="nav-item">
+            <i class="fas fa-box"></i>
+            <span>Produtos</span>
+          </router-link>
+          <router-link to="/admin/configuracoes" class="nav-item">
+            <i class="fas fa-sliders-h"></i>
+            <span>Configurações</span>
+          </router-link>
+        </template>
+      </nav>
+
+      <div class="user-config">
+        <div class="user-info">
+          <div class="user-avatar">
+            <img src="@/assets/avatar.jpg" :alt="authStore.user?.name" />
+          </div>
+          <div class="user-details">
+            <span class="user-name">{{ authStore.user?.name }}</span>
+            <span class="user-email">{{ authStore.user?.email }}</span>
+          </div>
         </div>
+        <button @click="logout" class="nav-item logout-btn">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Sair</span>
+        </button>
       </div>
-    </section>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="top-bar">
+        <div class="page-title">
+          <h1>Rifas em Destaque</h1>
+        </div>
+        <div class="header-actions">
+          <button class="btn-icon">
+            <i class="fas fa-search"></i>
+          </button>
+          <button class="btn-icon">
+            <i class="fas fa-bell"></i>
+          </button>
+        </div>
+      </header>
+
+      <div class="dashboard-content">
+        <!-- Featured Raffles Section -->
+        <section class="featured-raffles">
+          <div class="raffle-grid">
+            <RaffleCard
+              v-for="raffle in featuredRaffles"
+              :key="raffle.id"
+              :raffle="raffle"
+              @select-quote="navigateToRaffle(raffle.id)"
+            />
+          </div>
+        </section>
+
+        <!-- How it Works Section -->
+        <section class="how-it-works">
+          <h2>Como Funciona</h2>
+          <div class="steps-grid">
+            <div class="step-card">
+              <div class="step-icon">
+                <i class="fas fa-search"></i>
+              </div>
+              <div class="step-content">
+                <h3>1. Escolha uma Rifa</h3>
+                <p>Navegue entre as rifas disponíveis e escolha a que mais te interessar</p>
+              </div>
+            </div>
+            
+            <div class="step-card">
+              <div class="step-icon">
+                <i class="fas fa-ticket-alt"></i>
+              </div>
+              <div class="step-content">
+                <h3>2. Selecione seus Números</h3>
+                <p>Escolha quantos números desejar para aumentar suas chances</p>
+              </div>
+            </div>
+            
+            <div class="step-card">
+              <div class="step-icon">
+                <i class="fas fa-credit-card"></i>
+              </div>
+              <div class="step-content">
+                <h3>3. Faça o Pagamento</h3>
+                <p>Pague de forma segura com cartão de crédito ou PIX</p>
+              </div>
+            </div>
+            
+            <div class="step-card">
+              <div class="step-icon">
+                <i class="fas fa-trophy"></i>
+              </div>
+              <div class="step-content">
+                <h3>4. Aguarde o Sorteio</h3>
+                <p>Acompanhe o sorteio ao vivo e boa sorte!</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import RaffleCard from '../components/RaffleCard.vue'
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '../stores/auth';
+import RaffleCard from '../components/RaffleCard.vue';
 
-const router = useRouter()
-const featuredRaffles = ref([])
+const router = useRouter();
+const authStore = useAuthStore();
+const featuredRaffles = ref([]);
 
-// Simulando dados de rifas em destaque
 onMounted(() => {
   featuredRaffles.value = [
     {
@@ -78,121 +170,258 @@ onMounted(() => {
       total_quotes: 2000,
       sold_quotes: 800,
       status: 'active'
-    },
-    // Adicione mais rifas conforme necessário
-  ])
-})
+    }
+  ];
+});
 
 const navigateToRaffle = (raffleId) => {
-  router.push(`/rifas/${raffleId}`)
-}
+  router.push(`/rifas/${raffleId}`);
+};
+
+const logout = () => {
+  authStore.logout();
+};
 </script>
 
 <style scoped>
-.home {
+.dashboard {
+  display: flex;
   min-height: 100vh;
+  background-color: #f8f9fa;
 }
 
-.hero {
-  background: linear-gradient(rgba(0, 109, 119, 0.9), rgba(0, 109, 119, 0.9)),
-              url('/images/hero-bg.jpg') center/cover;
-  height: 60vh;
+.sidebar {
+  width: 280px;
+  background-color: #2d1b69;
+  color: white;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo-container {
   display: flex;
   align-items: center;
-  justify-content: center;
-  text-align: center;
+  gap: 0.5rem;
+  padding: 1rem 0;
+  margin-bottom: 2rem;
+}
+
+.logo {
+  width: 32px;
+  height: 32px;
+}
+
+.logo-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.menu-divider {
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 1rem 0;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  border-radius: 8px;
+  gap: 1rem;
+  transition: all 0.3s ease;
+}
+
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
   color: white;
-  padding: var(--spacing-xl);
 }
 
-.hero__content {
-  max-width: 800px;
+.nav-item i {
+  width: 20px;
 }
 
-.hero h1 {
-  font-family: var(--font-heading);
-  font-size: 3rem;
-  margin-bottom: var(--spacing-md);
+.nav-item.active {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
 }
 
-.hero p {
-  font-size: 1.2rem;
-  margin-bottom: var(--spacing-lg);
+.user-config {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.featured-raffles,
-.how-it-works {
-  padding: var(--spacing-xl);
-  max-width: 1200px;
-  margin: 0 auto;
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
-h2 {
-  font-family: var(--font-heading);
-  color: var(--color-neutral);
-  text-align: center;
-  margin-bottom: var(--spacing-xl);
+.user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: 600;
+  color: white;
+}
+
+.user-email {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.logout-btn {
+  width: 100%;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.main-content {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.page-title h1 {
+  font-size: 1.5rem;
+  color: #2d1b69;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.btn-icon:hover {
+  background-color: rgba(45, 27, 105, 0.1);
+}
+
+.user-avatar img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.dashboard-content {
+  padding: 1rem;
+}
+
+.featured-raffles {
+  margin-bottom: 3rem;
 }
 
 .raffle-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--spacing-lg);
+  gap: 1.5rem;
+}
+
+.how-it-works h2 {
+  text-align: center;
+  color: #2d1b69;
+  margin-bottom: 2rem;
 }
 
 .steps-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--spacing-xl);
-  text-align: center;
+  gap: 1.5rem;
 }
 
-.step {
-  padding: var(--spacing-lg);
+.step-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
 }
 
-.step i {
-  font-size: 2.5rem;
-  color: var(--color-primary);
-  margin-bottom: var(--spacing-md);
+.step-card:hover {
+  transform: translateY(-5px);
 }
 
-.step h3 {
-  font-family: var(--font-heading);
-  color: var(--color-neutral);
-  margin-bottom: var(--spacing-sm);
+.step-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  background-color: #2d1b69;
 }
 
-.btn {
-  display: inline-block;
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border-radius: var(--border-radius-md);
-  font-family: var(--font-interactive);
-  text-decoration: none;
-  transition: var(--transition-fast);
+.step-content {
+  flex: 1;
 }
 
-.btn--primary {
-  background: var(--color-secondary);
-  color: var(--color-neutral);
+.step-content h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: #2d1b69;
 }
 
-.btn--primary:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+.step-content p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 
 @media (max-width: 768px) {
-  .hero h1 {
-    font-size: 2rem;
+  .dashboard {
+    flex-direction: column;
   }
 
-  .hero p {
-    font-size: 1rem;
+  .sidebar {
+    width: 100%;
+    padding: 1rem;
   }
 
   .steps-grid {
-    gap: var(--spacing-lg);
+    grid-template-columns: 1fr;
   }
 }
 </style>

@@ -8,6 +8,7 @@
         >
           Login
         </button>
+        <div></div>
         <button 
           :class="['tab-btn', { active: !isLogin }]"
           @click="isLogin = false"
@@ -133,7 +134,8 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { vMask } from '@vuelidate/validators'
+import { useVuelidate } from '@vuelidate/core'
+import { required, email, minLength } from '@vuelidate/validators'
 
 const router = useRouter()
 const authStore = useAuthStore()
