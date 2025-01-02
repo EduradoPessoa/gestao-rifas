@@ -8,7 +8,6 @@
         >
           Login
         </button>
-        <div></div>
         <button 
           :class="['tab-btn', { active: !isLogin }]"
           @click="isLogin = false"
@@ -41,13 +40,17 @@
           >
         </div>
 
+        <div v-if="authStore.error" class="error-message">
+          {{ authStore.error }}
+        </div>
+
         <div class="form-footer">
           <a href="#" class="forgot-password" @click.prevent="forgotPassword">
             Esqueceu sua senha?
           </a>
           <button 
             type="submit" 
-            class="btn btn--primary"
+            class="submit-btn"
             :disabled="authStore.loading"
           >
             {{ authStore.loading ? 'Entrando...' : 'Entrar' }}
@@ -58,13 +61,13 @@
       <!-- Register Form -->
       <form v-else @submit.prevent="handleRegister" class="auth-form">
         <div class="form-group">
-          <label for="register-name">Nome Completo</label>
+          <label for="register-name">Nome</label>
           <input
             id="register-name"
             type="text"
             v-model="registerForm.name"
             required
-            placeholder="Seu nome completo"
+            placeholder="Seu nome"
           >
         </div>
 
@@ -86,8 +89,7 @@
             type="tel"
             v-model="registerForm.phone"
             required
-            placeholder="(00) 00000-0000"
-            v-mask="'(##) #####-####'"
+            placeholder="(11) 99999-9999"
           >
         </div>
 
@@ -98,46 +100,30 @@
             type="password"
             v-model="registerForm.password"
             required
-            placeholder="Crie uma senha forte"
+            placeholder="Sua senha"
           >
         </div>
 
-        <div class="form-group">
-          <label for="register-password-confirm">Confirme a Senha</label>
-          <input
-            id="register-password-confirm"
-            type="password"
-            v-model="registerForm.passwordConfirm"
-            required
-            placeholder="Digite a senha novamente"
-          >
+        <div v-if="authStore.error" class="error-message">
+          {{ authStore.error }}
         </div>
 
         <button 
           type="submit" 
-          class="btn btn--primary"
-          :disabled="authStore.loading || !isPasswordMatch"
+          class="submit-btn"
+          :disabled="authStore.loading"
         >
           {{ authStore.loading ? 'Cadastrando...' : 'Cadastrar' }}
         </button>
       </form>
-
-      <!-- Error Message -->
-      <div v-if="authStore.error" class="error-message">
-        {{ authStore.error }}
-      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
-import { useVuelidate } from '@vuelidate/core'
-import { required, email, minLength } from '@vuelidate/validators'
 
-const router = useRouter()
 const authStore = useAuthStore()
 const isLogin = ref(true)
 
@@ -150,46 +136,35 @@ const registerForm = ref({
   name: '',
   email: '',
   phone: '',
-  password: '',
-  passwordConfirm: ''
-})
-
-const isPasswordMatch = computed(() => {
-  return registerForm.value.password === registerForm.value.passwordConfirm
+  password: ''
 })
 
 const handleLogin = async () => {
   try {
     await authStore.login(loginForm.value)
-    router.push('/perfil')
   } catch (error) {
     console.error('Erro no login:', error)
   }
 }
 
 const handleRegister = async () => {
-  if (!isPasswordMatch.value) {
-    authStore.error = 'As senhas não conferem'
-    return
-  }
-
   try {
     await authStore.register(registerForm.value)
-    router.push('/perfil')
   } catch (error) {
-    console.error('Erro no cadastro:', error)
+    console.error('Erro no registro:', error)
   }
 }
 
 const forgotPassword = async () => {
-  if (!loginForm.value.email) {
-    authStore.error = 'Digite seu e-mail para recuperar a senha'
+  const email = loginForm.value.email
+  if (!email) {
+    authStore.error = 'Por favor, insira seu e-mail para recuperar a senha'
     return
   }
 
   try {
-    await authStore.forgotPassword(loginForm.value.email)
-    alert('Enviamos um e-mail com instruções para recuperar sua senha')
+    await authStore.forgotPassword(email)
+    alert('Instruções de recuperação enviadas para seu e-mail')
   } catch (error) {
     console.error('Erro na recuperação de senha:', error)
   }
@@ -202,84 +177,79 @@ const forgotPassword = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--spacing-xl);
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  background-color: #f5f5f5;
+  padding: 20px;
 }
 
 .auth-box {
   background: white;
-  border-radius: var(--border-radius-lg);
-  padding: var(--spacing-xl);
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 500px;
-  box-shadow: var(--shadow-lg);
+  max-width: 400px;
 }
 
 .auth-tabs {
   display: flex;
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: 2rem;
   border-bottom: 2px solid #eee;
 }
 
 .tab-btn {
   flex: 1;
-  padding: var(--spacing-md);
-  background: none;
+  padding: 1rem;
   border: none;
-  font-family: var(--font-interactive);
-  font-size: 1.1rem;
-  color: var(--color-neutral);
+  background: none;
   cursor: pointer;
-  transition: var(--transition-fast);
+  font-size: 1rem;
+  color: #666;
+  transition: all 0.3s ease;
 }
 
 .tab-btn.active {
-  color: var(--color-primary);
-  border-bottom: 2px solid var(--color-primary);
+  color: #8B5CF6;
+  border-bottom: 2px solid #8B5CF6;
   margin-bottom: -2px;
 }
 
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: 1.5rem;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: 0.5rem;
 }
 
 .form-group label {
-  font-family: var(--font-body);
-  color: var(--color-neutral);
   font-size: 0.9rem;
+  color: #666;
 }
 
 .form-group input {
-  padding: var(--spacing-sm);
+  padding: 0.75rem;
   border: 1px solid #ddd;
-  border-radius: var(--border-radius-sm);
-  font-family: var(--font-body);
-  transition: var(--transition-fast);
+  border-radius: 4px;
+  font-size: 1rem;
 }
 
 .form-group input:focus {
-  border-color: var(--color-primary);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(0, 109, 119, 0.1);
+  border-color: #8B5CF6;
 }
 
 .form-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: var(--spacing-sm);
 }
 
 .forgot-password {
-  color: var(--color-primary);
+  color: #8B5CF6;
   text-decoration: none;
   font-size: 0.9rem;
 }
@@ -288,48 +258,32 @@ const forgotPassword = async () => {
   text-decoration: underline;
 }
 
-.btn {
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border: none;
-  border-radius: var(--border-radius-sm);
-  font-family: var(--font-interactive);
-  cursor: pointer;
-  transition: var(--transition-fast);
-}
-
-.btn--primary {
-  background: var(--color-primary);
+.submit-btn {
+  background: #8B5CF6;
   color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.3s ease;
 }
 
-.btn--primary:hover:not(:disabled) {
-  background: var(--color-secondary);
+.submit-btn:hover {
+  background: #7C3AED;
 }
 
-.btn:disabled {
-  opacity: 0.7;
+.submit-btn:disabled {
+  background: #A78BFA;
   cursor: not-allowed;
 }
 
 .error-message {
-  margin-top: var(--spacing-md);
-  padding: var(--spacing-sm);
-  background: #fff2f2;
-  border: 1px solid #ffcdd2;
-  color: #d32f2f;
-  border-radius: var(--border-radius-sm);
+  color: #DC2626;
+  font-size: 0.9rem;
   text-align: center;
-}
-
-@media (max-width: 768px) {
-  .auth-box {
-    padding: var(--spacing-md);
-  }
-
-  .form-footer {
-    flex-direction: column;
-    gap: var(--spacing-md);
-    align-items: stretch;
-  }
+  padding: 0.5rem;
+  background: #FEE2E2;
+  border-radius: 4px;
 }
 </style>

@@ -1,82 +1,51 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-
-// Views
 import Home from '../views/Home.vue'
 import Auth from '../views/Auth.vue'
-import Rifas from '../views/Rifas.vue'
-import AdminDashboard from '../views/admin/Dashboard.vue'
-import AdminRaffles from '../views/admin/Raffles.vue'
-
-const routes = [
-  {
-    path: '/',
-    name: 'home',
-    component: Home,
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/auth',
-    name: 'auth',
-    component: Auth,
-    meta: { guest: true }
-  },
-  {
-    path: '/rifas',
-    name: 'rifas',
-    component: Rifas,
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/admin',
-    component: AdminDashboard,
-    meta: { requiresAuth: true, requiresAdmin: true },
-    children: [
-      {
-        path: '',
-        redirect: { name: 'admin-raffles' }
-      },
-      {
-        path: 'rifas',
-        name: 'admin-raffles',
-        component: AdminRaffles
-      }
-      // Outras rotas admin serão adicionadas aqui
-    ]
-  }
-]
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes: [
+    {
+      path: '/',
+      name: 'home',
+      component: Home,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/auth',
+      name: 'auth',
+      component: Auth,
+      meta: { guest: true }
+    }
+  ]
 })
 
 // Navigation guard
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
-  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-  const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin)
-  const isGuestRoute = to.matched.some(record => record.meta.guest)
+  const isAuthenticated = authStore.isAuthenticated
 
-  // Redireciona para login se não estiver autenticado
-  if (requiresAuth && !authStore.isAuthenticated) {
-    next({ name: 'auth' })
-    return
+  // Rota requer autenticação
+  if (to.matched.some(record => record.meta.requiresAuth)) {
+    if (!isAuthenticated) {
+      next('/auth')
+    } else {
+      next()
+    }
   }
-
-  // Redireciona para home se tentar acessar rotas de guest estando autenticado
-  if (isGuestRoute && authStore.isAuthenticated) {
-    next({ name: 'home' })
-    return
+  // Rota é apenas para visitantes (como login)
+  else if (to.matched.some(record => record.meta.guest)) {
+    if (isAuthenticated) {
+      next('/')
+    } else {
+      next()
+    }
   }
-
-  // Redireciona para home se não for admin tentando acessar área admin
-  if (requiresAdmin && !authStore.isAdmin) {
-    next({ name: 'home' })
-    return
+  // Rota pública
+  else {
+    next()
   }
-
-  next()
 })
 
 export default router

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import axios from '../plugins/axios'
 import router from '../router'
 
 export const useAuthStore = defineStore('auth', {
@@ -20,10 +20,11 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true
       this.error = null
       try {
-        const response = await axios.post('/api/auth/login', credentials)
+        const response = await axios.post('/auth/login', credentials)
         this.setAuthData(response.data)
-        router.push('/perfil')
+        router.push('/')
       } catch (error) {
+        console.error('Erro detalhado:', error.response?.data)
         this.error = error.response?.data?.message || 'Erro ao fazer login'
         throw error
       } finally {
@@ -35,10 +36,11 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true
       this.error = null
       try {
-        const response = await axios.post('/api/auth/register', userData)
+        const response = await axios.post('/auth/register', userData)
         this.setAuthData(response.data)
-        router.push('/perfil')
+        router.push('/')
       } catch (error) {
+        console.error('Erro detalhado:', error.response?.data)
         this.error = error.response?.data?.message || 'Erro ao criar conta'
         throw error
       } finally {
@@ -50,8 +52,9 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true
       this.error = null
       try {
-        await axios.post('/api/auth/forgot-password', { email })
+        await axios.post('/auth/forgot-password', { email })
       } catch (error) {
+        console.error('Erro detalhado:', error.response?.data)
         this.error = error.response?.data?.message || 'Erro ao recuperar senha'
         throw error
       } finally {
@@ -63,8 +66,9 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true
       this.error = null
       try {
-        await axios.post('/api/auth/reset-password', { token, password })
+        await axios.post('/auth/reset-password', { token, password })
       } catch (error) {
+        console.error('Erro detalhado:', error.response?.data)
         this.error = error.response?.data?.message || 'Erro ao redefinir senha'
         throw error
       } finally {
@@ -73,15 +77,12 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async fetchUser() {
-      if (!this.token) return
-      
       try {
-        const response = await axios.get('/api/auth/me')
+        const response = await axios.get('/auth/me')
         this.user = response.data
       } catch (error) {
-        if (error.response?.status === 401) {
-          this.logout()
-        }
+        this.logout()
+        throw error
       }
     },
 
@@ -97,15 +98,19 @@ export const useAuthStore = defineStore('auth', {
       this.token = null
       localStorage.removeItem('token')
       delete axios.defaults.headers.common['Authorization']
-      router.push('/login')
+      router.push('/auth')
     },
 
-    initializeAuth() {
+    async initializeAuth() {
       const token = localStorage.getItem('token')
       if (token) {
         this.token = token
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-        this.fetchUser()
+        try {
+          await this.fetchUser()
+        } catch (error) {
+          this.logout()
+        }
       }
     }
   }

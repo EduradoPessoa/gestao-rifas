@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const db = require('../database');
+const db = require('../database/config');
 
 class AuthController {
   async register(req, res) {
@@ -8,7 +8,7 @@ class AuthController {
 
     try {
       // Verificar se o email já existe
-      const [existingUser] = await db.get(
+      const existingUser = await db.getAsync(
         'SELECT id FROM users WHERE email = ?',
         [email]
       );
@@ -22,7 +22,7 @@ class AuthController {
       const hashedPassword = await bcrypt.hash(password, salt);
 
       // Inserir usuário
-      const result = await db.run(
+      const result = await db.runAsync(
         `INSERT INTO users (name, email, phone, password) 
          VALUES (?, ?, ?, ?)`,
         [name, email, phone, hashedPassword]
@@ -31,8 +31,8 @@ class AuthController {
       // Gerar token
       const token = jwt.sign(
         { id: result.lastID },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRATION }
+        process.env.JWT_SECRET || 'your-secret-key',
+        { expiresIn: process.env.JWT_EXPIRATION || '24h' }
       );
 
       res.status(201).json({
@@ -41,7 +41,8 @@ class AuthController {
           id: result.lastID,
           name,
           email,
-          phone
+          phone,
+          role: 'user'
         }
       });
     } catch (error) {
@@ -52,38 +53,49 @@ class AuthController {
 
   async login(req, res) {
     const { email, password } = req.body;
+    console.log('Tentativa de login:', { email });
 
     try {
       // Buscar usuário
-      const user = await db.get(
+      console.log('Buscando usuário no banco...');
+      const user = await db.getAsync(
         'SELECT * FROM users WHERE email = ?',
         [email]
       );
+      console.log('Usuário encontrado:', user);
 
       if (!user) {
+        console.log('Usuário não encontrado');
         return res.status(401).json({ message: 'Credenciais inválidas' });
       }
 
       // Verificar senha
+      console.log('Verificando senha...');
       const isValidPassword = await bcrypt.compare(password, user.password);
+      console.log('Senha válida:', isValidPassword);
+
       if (!isValidPassword) {
+        console.log('Senha inválida');
         return res.status(401).json({ message: 'Credenciais inválidas' });
       }
 
       // Gerar token
+      console.log('Gerando token...');
       const token = jwt.sign(
         { id: user.id },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRATION }
+        process.env.JWT_SECRET || 'your-secret-key',
+        { expiresIn: process.env.JWT_EXPIRATION || '24h' }
       );
 
+      console.log('Login bem-sucedido');
       res.json({
         token,
         user: {
           id: user.id,
           name: user.name,
           email: user.email,
-          phone: user.phone
+          phone: user.phone,
+          role: user.role
         }
       });
     } catch (error) {
@@ -96,7 +108,7 @@ class AuthController {
     const { email } = req.body;
 
     try {
-      const user = await db.get(
+      const user = await db.getAsync(
         'SELECT id FROM users WHERE email = ?',
         [email]
       );
@@ -105,19 +117,12 @@ class AuthController {
         return res.status(404).json({ message: 'Usuário não encontrado' });
       }
 
-      // Gerar token de reset
-      const resetToken = jwt.sign(
-        { id: user.id },
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' }
-      );
-
-      // Aqui você implementaria o envio do email
-      // Por enquanto, apenas retornamos sucesso
+      // Aqui você implementaria a lógica de envio de e-mail
+      // Por enquanto, apenas simulamos o sucesso
       res.json({ message: 'E-mail de recuperação enviado' });
     } catch (error) {
       console.error('Erro na recuperação de senha:', error);
-      res.status(500).json({ message: 'Erro ao processar solicitação' });
+      res.status(500).json({ message: 'Erro ao processar recuperação de senha' });
     }
   }
 
@@ -126,22 +131,22 @@ class AuthController {
 
     try {
       // Verificar token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
 
       // Hash da nova senha
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
       // Atualizar senha
-      await db.run(
+      await db.runAsync(
         'UPDATE users SET password = ? WHERE id = ?',
         [hashedPassword, decoded.id]
       );
 
-      res.json({ message: 'Senha atualizada com sucesso' });
+      res.json({ message: 'Senha alterada com sucesso' });
     } catch (error) {
       console.error('Erro na redefinição de senha:', error);
-      res.status(400).json({ message: 'Token inválido ou expirado' });
+      res.status(500).json({ message: 'Erro ao redefinir senha' });
     }
   }
 }
